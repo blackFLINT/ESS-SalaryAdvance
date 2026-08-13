@@ -1,0 +1,18 @@
+Project Name: Employee Self Service Salary Advance
+
+Source Repository:
+- Add your Git repository URL here
+
+Live Frontend URL:
+- Add deployed frontend URL here
+
+Live Backend API URL:
+- Add deployed backend URL here
+
+Credentials (for assessor, if required):
+- Employee: employee@ess.local / Password@123
+- Manager: manager@ess.local / Password@123
+- Admin: admin@ess.local / Password@123
+
+Notes:
+- Replace local seeded credentials with assessor-safe credentials in production submission.
