@@ -10,10 +10,10 @@ Live Backend API URL:
 - Add deployed backend URL here
 
 Credentials (for assessor, if required):
-- Employee: employee@ess.local / Key$Employ88#
-- Manager: manager@ess.local / l00kBack1ooo$
-- Admin: admin@ess.local / SAfetyLast#23
-- HR/Payroll: payroll@ess.local / T4actical#0067
+- Employee: employee@ess.local / provide demo password securely
+- Manager: manager@ess.local / provide demo password securely
+- Admin: admin@ess.local / provide demo password securely
+- HR/Payroll: payroll@ess.local / provide demo password securely
 
 Notes:
 - Do not publish seeded passwords in production-facing documentation.

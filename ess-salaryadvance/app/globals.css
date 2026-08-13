@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #f1f5f9;
+    --foreground: #0f172a;
+    --sidebar: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --primary: #dc2626; /* Using red as in the logo from screenshot */
+    --primary-foreground: #ffffff;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased font-sans;
+  }
+}
+
+@layer utilities {
+  .bento-card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-5;
+  }
+}
+
+/* Base custom styles to keep legacy pages somewhat intact until updated */
+.page {
+  @apply min-h-screen flex items-center justify-center p-6;
+}
+.card {
+  @apply bg-white border border-slate-200 rounded-2xl shadow-sm p-6 w-full;
+}
+.stack {
+  @apply flex flex-col gap-4;
+}
+.title {
+  @apply text-3xl font-semibold tracking-tight;
+}
+.subtitle {
+  @apply text-slate-500;
+}
+label {
+  @apply text-sm font-medium;
+}
+input, textarea, select {
+  @apply w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all;
+}
+button {
+  @apply bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors cursor-pointer;
+}
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+.error {
+  @apply text-sm text-red-600;
+}
+.hint {
+  @apply text-sm text-slate-500;
+}
+
+.app-shell {
+  @apply flex min-h-screen w-full bg-[var(--background)];
+}
+
+.main-content {
+  @apply flex-1 flex flex-col p-8 overflow-y-auto h-screen;
+}
+
+.page-header {
+  @apply flex justify-between items-center mb-8;
+}
+
+.page-header-title {
+  @apply text-2xl font-semibold tracking-tight text-slate-800;
+}
+
+.bento-grid {
+  @apply grid grid-cols-12 gap-6;
+}
+
+.bento-col-main {
+  @apply col-span-12 lg:col-span-8 flex flex-col gap-6;
+}
+
+.bento-col-side {
+  @apply col-span-12 lg:col-span-4 flex flex-col gap-6;
+}

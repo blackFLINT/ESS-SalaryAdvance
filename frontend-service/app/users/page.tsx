@@ -1,15 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clearSession, getSession } from "../../lib/auth";
-import { createUser, getFeatures, getMyProfile, getUsers, updateUserAccess } from "../../lib/api";
+import { getFeatures, getMyProfile, getUsers, updateUserAccess } from "../../lib/api";
 import { FeatureAccess, ManagedUser, UserRole } from "../../lib/types";
 import { AppMenu } from "../../components/AppMenu";
 import { canManageUsers } from "../../lib/roles";
-import { CreateUserInput, createUserSchema, UpdateAccessInput, updateAccessSchema } from "../../lib/validation";
+import { UpdateAccessInput, updateAccessSchema } from "../../lib/validation";
 
 const roleOptions: UserRole[] = ["EMPLOYEE", "MANAGER", "ADMIN", "HR_PAYROLL"];
 
@@ -21,38 +22,26 @@ export default function UsersPage() {
   const [success, setSuccess] = useState("");
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [features, setFeatures] = useState<FeatureAccess[]>([]);
+  const [viewUser, setViewUser] = useState<ManagedUser | null>(null);
+  const [editUser, setEditUser] = useState<ManagedUser | null>(null);
 
   const {
-    register: createRegister,
-    handleSubmit: handleCreateSubmit,
-    setValue: setCreateValue,
-    watch: watchCreate,
-    reset: resetCreate,
-    formState: { errors: createErrors, isSubmitting: isCreating }
-  } = useForm<CreateUserInput>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      role: "EMPLOYEE",
-      features: []
-    }
-  });
-
-  const {
-    register: accessRegister,
-    handleSubmit: handleAccessSubmit,
-    setValue: setAccessValue,
-    watch: watchAccess,
-    formState: { errors: accessErrors, isSubmitting: isUpdating }
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting }
   } = useForm<UpdateAccessInput>({
     resolver: zodResolver(updateAccessSchema),
     defaultValues: {
+      userId: "",
       role: "EMPLOYEE",
       features: []
     }
   });
 
-  const createFeatures = watchCreate("features") ?? [];
-  const accessFeatures = watchAccess("features") ?? [];
+  const selectedFeatures = watch("features") ?? [];
 
   useEffect(() => {
     setSession(getSession());
@@ -90,25 +79,18 @@ export default function UsersPage() {
     void load();
   }, [load]);
 
-  const selectedUser = useMemo(
-    () => users.find((u) => String(u.id) === watchAccess("userId")),
-    [users, watchAccess]
-  );
+  useEffect(() => {
+    if (!editUser) {
+      reset({ userId: "", role: "EMPLOYEE", features: [] });
+      return;
+    }
 
-  const roleFeatureMap = useMemo(() => {
-    const map = new Map<UserRole, Set<FeatureAccess>>();
-    roleOptions.forEach((role) => map.set(role, new Set<FeatureAccess>()));
-
-    users.forEach((user) => {
-      const bucket = map.get(user.role);
-      if (!bucket) {
-        return;
-      }
-      user.features.forEach((feature) => bucket.add(feature));
+    reset({
+      userId: String(editUser.id),
+      role: editUser.role,
+      features: editUser.features
     });
-
-    return map;
-  }, [users]);
+  }, [editUser, reset]);
 
   const roleCounts = useMemo(() => {
     const map = new Map<UserRole, number>();
@@ -117,48 +99,17 @@ export default function UsersPage() {
     return map;
   }, [users]);
 
-  useEffect(() => {
-    if (selectedUser) {
-      setAccessValue("role", selectedUser.role);
-      setAccessValue("features", selectedUser.features);
-    }
-  }, [selectedUser, setAccessValue]);
-
-  const toggleListValue = (current: string[], value: string): string[] => {
-    if (current.includes(value)) {
-      return current.filter((x) => x !== value);
-    }
-    return [...current, value];
-  };
-
-  const onCreate = async (values: CreateUserInput) => {
-    if (!session?.token) {
+  const toggleFeature = (value: FeatureAccess) => {
+    if (selectedFeatures.includes(value)) {
+      setValue("features", selectedFeatures.filter((feature) => feature !== value));
       return;
     }
-    setError("");
-    setSuccess("");
-    try {
-      await createUser(session.token, {
-        employeeNumber: values.employeeNumber,
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        department: values.department,
-        monthlySalary: Number(values.monthlySalary),
-        jobTitle: values.jobTitle,
-        branchLocation: values.branchLocation,
-        managerName: values.managerName,
-        salaryBand: values.salaryBand,
-        maxAdvanceEligibility: values.maxAdvanceEligibility ? Number(values.maxAdvanceEligibility) : undefined,
-        role: values.role,
-        features: values.features as FeatureAccess[]
-      });
-      setSuccess("User created successfully.");
-      resetCreate({ role: "EMPLOYEE", features: [] });
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create user");
-    }
+    setValue("features", [...selectedFeatures, value]);
+  };
+
+  const closeModal = () => {
+    setViewUser(null);
+    setEditUser(null);
   };
 
   const onUpdateAccess = async (values: UpdateAccessInput) => {
@@ -172,7 +123,8 @@ export default function UsersPage() {
         role: values.role,
         features: values.features as FeatureAccess[]
       });
-      setSuccess("User role/features updated successfully.");
+      setSuccess("User access updated successfully.");
+      closeModal();
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to update user access");
@@ -187,10 +139,10 @@ export default function UsersPage() {
     <main className="app-shell">
       <AppMenu session={session} />
       <section className="card stack">
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+        <div className="page-head">
           <div>
-            <h1 className="title" style={{ marginBottom: 6 }}>User Management</h1>
-            <p className="subtitle" style={{ margin: 0 }}>Create users, assign roles, and feature access.</p>
+            <h1 className="title">User Management</h1>
+            <p className="subtitle">Browse users, inspect profiles, and manage role-based access.</p>
           </div>
           <button
             type="button"
@@ -206,165 +158,59 @@ export default function UsersPage() {
 
         {loading && <p>Loading...</p>}
         {error && <p className="error">{error}</p>}
-        {success && <p style={{ color: "#166534", margin: 0 }}>{success}</p>}
+        {success && <p className="success">{success}</p>}
 
         {!loading && (
           <>
-            <div className="grid-2">
-              <section className="panel stack">
-                <h2 style={{ margin: 0 }}>Add User</h2>
-                <form className="stack" onSubmit={handleCreateSubmit(onCreate)}>
-                  <input placeholder="Employee Number" {...createRegister("employeeNumber")} />
-                  {createErrors.employeeNumber && <p className="error">{createErrors.employeeNumber.message}</p>}
-
-                  <input placeholder="Full Name" {...createRegister("fullName")} />
-                  {createErrors.fullName && <p className="error">{createErrors.fullName.message}</p>}
-
-                  <input placeholder="Email" {...createRegister("email")} />
-                  {createErrors.email && <p className="error">{createErrors.email.message}</p>}
-
-                  <input type="password" placeholder="Temporary Password" {...createRegister("password")} />
-                  {createErrors.password && <p className="error">{createErrors.password.message}</p>}
-
-                  <input placeholder="Department" {...createRegister("department")} />
-                  {createErrors.department && <p className="error">{createErrors.department.message}</p>}
-
-                  <input placeholder="Job Title" {...createRegister("jobTitle")} />
-                  <input placeholder="Branch / Location" {...createRegister("branchLocation")} />
-                  <input placeholder="Manager" {...createRegister("managerName")} />
-                  <input placeholder="Salary Band" {...createRegister("salaryBand")} />
-                  <input placeholder="Max Advance Eligibility" {...createRegister("maxAdvanceEligibility")} />
-                  {createErrors.maxAdvanceEligibility && <p className="error">{createErrors.maxAdvanceEligibility.message}</p>}
-
-                  <input placeholder="Monthly Salary" {...createRegister("monthlySalary")} />
-                  {createErrors.monthlySalary && <p className="error">{createErrors.monthlySalary.message}</p>}
-
-                  <select {...createRegister("role")}>
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-
-                  <div className="stack" style={{ gap: 8 }}>
-                    <p style={{ margin: 0, fontWeight: 700 }}>Feature Access</p>
-                    {features.map((feature) => (
-                      <label key={feature} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <input
-                          type="checkbox"
-                          checked={createFeatures.includes(feature)}
-                          onChange={() => setCreateValue("features", toggleListValue(createFeatures, feature))}
-                        />
-                        {feature}
-                      </label>
-                    ))}
-                    {createErrors.features && <p className="error">{createErrors.features.message as string}</p>}
-                  </div>
-
-                  <button type="submit" disabled={isCreating}>{isCreating ? "Creating..." : "Create User"}</button>
-                </form>
-              </section>
-
-              <section className="panel stack">
-                <h2 style={{ margin: 0 }}>Assign Role & Features</h2>
-                <form className="stack" onSubmit={handleAccessSubmit(onUpdateAccess)}>
-                  <select {...accessRegister("userId")}>
-                    <option value="">Select User</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>{user.fullName} ({user.email})</option>
-                    ))}
-                  </select>
-                  {accessErrors.userId && <p className="error">{accessErrors.userId.message}</p>}
-
-                  <select {...accessRegister("role")}>
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-
-                  <div className="stack" style={{ gap: 8 }}>
-                    <p style={{ margin: 0, fontWeight: 700 }}>Feature Access</p>
-                    {features.map((feature) => (
-                      <label key={feature} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <input
-                          type="checkbox"
-                          checked={accessFeatures.includes(feature)}
-                          onChange={() => setAccessValue("features", toggleListValue(accessFeatures, feature))}
-                        />
-                        {feature}
-                      </label>
-                    ))}
-                    {accessErrors.features && <p className="error">{accessErrors.features.message as string}</p>}
-                  </div>
-
-                  <button type="submit" disabled={isUpdating}>{isUpdating ? "Updating..." : "Update Access"}</button>
-                </form>
-              </section>
+            <div className="user-list-toolbar">
+              <div className="stats-grid compact-stats">
+                <section className="panel stat-card">
+                  <p className="stat-label">Total Users</p>
+                  <p className="stat-value">{users.length}</p>
+                </section>
+                {roleOptions.map((role) => (
+                  <section className="panel stat-card" key={role}>
+                    <p className="stat-label">{role}</p>
+                    <p className="stat-value">{roleCounts.get(role) ?? 0}</p>
+                  </section>
+                ))}
+              </div>
+              <Link className="button-link" href="/users/new">Add New User</Link>
             </div>
 
             <section className="panel stack">
-              <h2 style={{ margin: 0 }}>All Users</h2>
+              <div className="page-head">
+                <div>
+                  <h2 style={{ margin: 0 }}>Users</h2>
+                  <p className="hint" style={{ margin: "4px 0 0" }}>Use View for profile details or Edit to update role and feature access.</p>
+                </div>
+              </div>
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>ID</th>
                       <th>Name</th>
                       <th>Email</th>
                       <th>Department</th>
-                      <th>Job Title</th>
                       <th>Role</th>
                       <th>Features</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((user) => (
                       <tr key={user.id}>
-                        <td>{user.id}</td>
-                        <td>{user.fullName}</td>
+                        <td><strong>{user.fullName}</strong><div className="matrix-sub">{user.employeeNumber}</div></td>
                         <td>{user.email}</td>
                         <td>{user.department}</td>
-                        <td>{user.jobTitle || "-"}</td>
-                        <td>{user.role}</td>
-                        <td>{user.features.join(", ")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section className="panel stack">
-              <h2 style={{ margin: 0 }}>Role/Feature Matrix</h2>
-              <p className="hint" style={{ margin: 0 }}>
-                Features are shown by role based on current user assignments.
-              </p>
-              <div className="table-wrap">
-                <table className="table matrix-table">
-                  <thead>
-                    <tr>
-                      <th>Feature</th>
-                      {roleOptions.map((role) => (
-                        <th key={role}>
-                          {role}
-                          <div className="matrix-sub">Users: {roleCounts.get(role) ?? 0}</div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {features.map((feature) => (
-                      <tr key={feature}>
-                        <td><strong>{feature}</strong></td>
-                        {roleOptions.map((role) => {
-                          const enabled = roleFeatureMap.get(role)?.has(feature) ?? false;
-                          return (
-                            <td key={`${feature}-${role}`}>
-                              <span className={enabled ? "matrix-pill yes" : "matrix-pill no"}>
-                                {enabled ? "YES" : "NO"}
-                              </span>
-                            </td>
-                          );
-                        })}
+                        <td><span className="badge processed">{user.role}</span></td>
+                        <td>{user.features.length}</td>
+                        <td>
+                          <div className="table-actions">
+                            <button type="button" className="secondary" onClick={() => setViewUser(user)}>View</button>
+                            <button type="button" onClick={() => setEditUser(user)}>Edit</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -374,6 +220,79 @@ export default function UsersPage() {
           </>
         )}
       </section>
+
+      {viewUser && (
+        <dialog className="modal-backdrop" open aria-labelledby="view-user-title">
+          <section className="modal stack">
+            <div className="page-head">
+              <div>
+                <h2 id="view-user-title" style={{ margin: 0 }}>{viewUser.fullName}</h2>
+                <p className="subtitle">{viewUser.email}</p>
+              </div>
+              <button type="button" className="secondary" onClick={closeModal}>Close</button>
+            </div>
+            <div className="detail-grid">
+              <p><strong>Employee No:</strong> {viewUser.employeeNumber}</p>
+              <p><strong>Department:</strong> {viewUser.department}</p>
+              <p><strong>Job Title:</strong> {viewUser.jobTitle || "-"}</p>
+              <p><strong>Branch:</strong> {viewUser.branchLocation || "-"}</p>
+              <p><strong>Manager:</strong> {viewUser.managerName || "-"}</p>
+              <p><strong>Salary Band:</strong> {viewUser.salaryBand || "-"}</p>
+              <p><strong>Monthly Salary:</strong> {viewUser.monthlySalary}</p>
+              <p><strong>Max Advance:</strong> {viewUser.maxAdvanceEligibility ?? "-"}</p>
+              <p><strong>Role:</strong> {viewUser.role}</p>
+            </div>
+            <div className="feature-pill-list">
+              {viewUser.features.map((feature) => <span className="badge" key={feature}>{feature}</span>)}
+            </div>
+          </section>
+        </dialog>
+      )}
+
+      {editUser && (
+        <dialog className="modal-backdrop" open aria-labelledby="edit-user-title">
+          <section className="modal stack">
+            <div className="page-head">
+              <div>
+                <h2 id="edit-user-title" style={{ margin: 0 }}>Edit Access</h2>
+                <p className="subtitle">{editUser.fullName} ({editUser.email})</p>
+              </div>
+              <button type="button" className="secondary" onClick={closeModal}>Close</button>
+            </div>
+            <form className="stack" onSubmit={handleSubmit(onUpdateAccess)}>
+              <input type="hidden" {...register("userId")} />
+              <div className="field-stack">
+                <label htmlFor="edit-user-role">Role</label>
+                <select id="edit-user-role" {...register("role")}>
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="stack" style={{ gap: 8 }}>
+                <p style={{ margin: 0, fontWeight: 700 }}>Feature Access</p>
+                <div className="feature-check-grid">
+                  {features.map((feature) => (
+                    <label className="check-card" key={feature}>
+                      <input
+                        type="checkbox"
+                        checked={selectedFeatures.includes(feature)}
+                        onChange={() => toggleFeature(feature)}
+                      />
+                      <span>{feature}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.features && <p className="error">{errors.features.message as string}</p>}
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="secondary" onClick={closeModal}>Cancel</button>
+                <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save Changes"}</button>
+              </div>
+            </form>
+          </section>
+        </dialog>
+      )}
     </main>
   );
 }

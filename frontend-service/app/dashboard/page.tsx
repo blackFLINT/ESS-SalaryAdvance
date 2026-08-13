@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [report, setReport] = useState<ReportSummary | null>(null);
   const [dashboardNotice, setDashboardNotice] = useState("");
+  const [showCompensation, setShowCompensation] = useState(false);
 
   useEffect(() => {
     setSession(getSession());
@@ -145,15 +146,26 @@ export default function DashboardPage() {
 
             <div className="grid-2">
               <section className="panel stack">
-                <h2 style={{ margin: 0 }}>My Profile</h2>
+                <div className="section-head">
+                  <h2 style={{ margin: 0 }}>My Profile</h2>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={showCompensation ? "Hide salary and limit" : "Show salary and limit"}
+                    title={showCompensation ? "Hide salary and limit" : "Show salary and limit"}
+                    onClick={() => setShowCompensation((value) => !value)}
+                  >
+                    {showCompensation ? "Hide" : "View"}
+                  </button>
+                </div>
                 <p style={{ margin: 0 }}><strong>Employee No:</strong> {profile.employeeNumber}</p>
                 <p style={{ margin: 0 }}><strong>Department:</strong> {profile.department}</p>
                 <p style={{ margin: 0 }}><strong>Job Title:</strong> {profile.jobTitle || "-"}</p>
                 <p style={{ margin: 0 }}><strong>Branch:</strong> {profile.branchLocation || "-"}</p>
                 <p style={{ margin: 0 }}><strong>Manager:</strong> {profile.managerName || "-"}</p>
                 <p style={{ margin: 0 }}><strong>Salary Band:</strong> {profile.salaryBand || "-"}</p>
-                <p style={{ margin: 0 }}><strong>Monthly Salary:</strong> {profile.monthlySalary}</p>
-                <p style={{ margin: 0 }}><strong>Max Advance Eligibility:</strong> {profile.maxAdvanceEligibility ?? "-"}</p>
+                <p style={{ margin: 0 }}><strong>Monthly Salary:</strong> <span className={showCompensation ? undefined : "masked-value"}>{showCompensation ? profile.monthlySalary : "••••••"}</span></p>
+                <p style={{ margin: 0 }}><strong>Max Advance Eligibility:</strong> <span className={showCompensation ? undefined : "masked-value"}>{showCompensation ? profile.maxAdvanceEligibility ?? "-" : "••••••"}</span></p>
                 <p style={{ margin: 0 }}><strong>Role:</strong> {profile.role}</p>
               </section>
 
