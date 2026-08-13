@@ -40,24 +40,36 @@ Services:
 
 ### 3. Seeded Login Accounts
 
-The backend seeds three users on first startup:
+The backend seeds four users on first startup. Use local/demo passwords only in private assessor channels; do not publish production passwords.
 
 - Employee
 	- email: employee@ess.local
-	- password: Password@123
 - Manager
 	- email: manager@ess.local
-	- password: Password@123
 - Admin
 	- email: admin@ess.local
-	- password: Password@123
+- HR/Payroll
+	- email: payroll@ess.local
+
+The local seed password is controlled by `APP_SEED_PASSWORD`. Share assessor-safe demo passwords privately, not in public documentation.
 
 ## Core Features
 
 - JWT authentication and role-based authorization
+- Refresh-token support, password change, password policy, and account lockout
+- Role-based and feature-level authorization
 - Employee self-service salary advance request
-- Validation rule: requested amount must be <= 50% of monthly salary
-- Manager/Admin review and approve/reject flow
+- Configurable advance eligibility using corporate settings and employee-specific max advance eligibility
+- Manager review and approve/reject flow
+- HR/Payroll approved advance processing with repayment schedule setup
+- Repayment tracking: installments, monthly deduction, remaining balance, repayment status
+- In-app notifications for submitted, approved/rejected, payroll-ready, and processed events
+- Audit trail for request lifecycle, user creation, role/feature changes, settings updates, and password changes
+- Monthly reports and CSV export for approved/processed advances
+- Admin user-management module: create users, assign roles, assign feature access
+- Admin corporate settings module
+- Admin system health and audit visibility
+- Role/Feature Matrix for visual permission auditing
 - Responsive frontend with production-grade form validation (Zod + React Hook Form)
 - Backend input validation and centralized error handling
 - Unit tests and integration-style controller tests
@@ -66,15 +78,36 @@ The backend seeds three users on first startup:
 
 ### Auth
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/change-password`
 
 ### Employee
 - `GET /api/employees/me`
 - `POST /api/advances`
 - `GET /api/advances/me`
 
-### Manager/Admin
+### Manager
 - `GET /api/advances/pending`
 - `PATCH /api/advances/{id}/decision`
+
+### HR/Payroll
+- `GET /api/advances/approved`
+- `PATCH /api/advances/{id}/process`
+
+### Admin User Management
+- `GET /api/users`
+- `GET /api/users/features`
+- `POST /api/users`
+- `PATCH /api/users/{userId}/access`
+
+### Enterprise Operations
+- `GET /api/notifications`
+- `GET /api/notifications/unread-count`
+- `GET /api/audit`
+- `GET /api/settings`
+- `PUT /api/settings`
+- `GET /api/reports/monthly`
+- `GET /api/reports/export`
 
 ## Documentation
 

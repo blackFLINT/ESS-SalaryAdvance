@@ -32,14 +32,12 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String ADMIN = "ADMIN";
+    private static final String MANAGER = "MANAGER";
+    private static final String HR_PAYROLL = "HR_PAYROLL";
+
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
 
     @Bean
     public UserDetailsService userDetailsService(EmployeeRepository employeeRepository) {
@@ -73,7 +71,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authProvider)
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            AuthenticationProvider authProvider,
+            JwtAuthenticationFilter jwtAuthenticationFilter)
             throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -81,9 +81,18 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/health").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/advances/pending").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/advances/*/decision").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
+                        .requestMatchers("/api/health").hasRole(ADMIN)
+                        .requestMatchers("/api/users/**").hasRole(ADMIN)
+                        .requestMatchers("/api/audit/**").hasRole(ADMIN)
+                        .requestMatchers("/api/settings/**").hasRole(ADMIN)
+                        .requestMatchers("/api/reports/**").hasAnyRole(ADMIN, HR_PAYROLL)
+                        .requestMatchers(HttpMethod.GET, "/api/advances/pending").hasRole(MANAGER)
+                        .requestMatchers(HttpMethod.PATCH, "/api/advances/*/decision").hasRole(MANAGER)
+                        .requestMatchers(HttpMethod.GET, "/api/advances/approved").hasRole(HR_PAYROLL)
+                        .requestMatchers(HttpMethod.PATCH, "/api/advances/*/process").hasRole(HR_PAYROLL)
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

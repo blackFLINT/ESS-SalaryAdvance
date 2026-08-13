@@ -39,9 +39,22 @@ public class AdvanceController {
         return ResponseEntity.ok(advanceService.listPending());
     }
 
+    @GetMapping("/approved")
+    public ResponseEntity<List<AdvanceResponseDto>> approvedForPayroll() {
+        return ResponseEntity.ok(advanceService.listApprovedForPayroll());
+    }
+
     @PatchMapping("/{id}/decision")
     public ResponseEntity<AdvanceResponseDto> decide(@PathVariable("id") Long id,
-            @Valid @RequestBody AdvanceDecisionDto dto) {
-        return ResponseEntity.ok(advanceService.decide(id, dto));
+            @Valid @RequestBody AdvanceDecisionDto dto,
+            Authentication authentication) {
+        return ResponseEntity.ok(advanceService.decide(id, dto, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}/process")
+    public ResponseEntity<AdvanceResponseDto> process(@PathVariable("id") Long id,
+            @Valid @RequestBody PayrollProcessDto dto,
+            Authentication authentication) {
+        return ResponseEntity.ok(advanceService.markProcessed(id, dto, authentication.getName()));
     }
 }

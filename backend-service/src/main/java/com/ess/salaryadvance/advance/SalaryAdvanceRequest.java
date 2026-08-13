@@ -41,6 +41,22 @@ public class SalaryAdvanceRequest {
     @Column(length = 400)
     private String approverComment;
 
+    @Column(length = 400)
+    private String payrollComment;
+
+    @Column(nullable = false)
+    private Integer repaymentInstallments = 3;
+
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal monthlyDeductionAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal remainingBalance = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RepaymentStatus repaymentStatus = RepaymentStatus.PENDING;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -89,6 +105,46 @@ public class SalaryAdvanceRequest {
 
     public void setApproverComment(String approverComment) {
         this.approverComment = approverComment;
+    }
+
+    public String getPayrollComment() {
+        return payrollComment;
+    }
+
+    public void setPayrollComment(String payrollComment) {
+        this.payrollComment = payrollComment;
+    }
+
+    public Integer getRepaymentInstallments() {
+        return repaymentInstallments;
+    }
+
+    public void setRepaymentInstallments(Integer repaymentInstallments) {
+        this.repaymentInstallments = repaymentInstallments;
+    }
+
+    public BigDecimal getMonthlyDeductionAmount() {
+        return monthlyDeductionAmount;
+    }
+
+    public void setMonthlyDeductionAmount(BigDecimal monthlyDeductionAmount) {
+        this.monthlyDeductionAmount = monthlyDeductionAmount;
+    }
+
+    public BigDecimal getRemainingBalance() {
+        return remainingBalance;
+    }
+
+    public void setRemainingBalance(BigDecimal remainingBalance) {
+        this.remainingBalance = remainingBalance;
+    }
+
+    public RepaymentStatus getRepaymentStatus() {
+        return repaymentStatus;
+    }
+
+    public void setRepaymentStatus(RepaymentStatus repaymentStatus) {
+        this.repaymentStatus = repaymentStatus;
     }
 
     public Instant getCreatedAt() {

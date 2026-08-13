@@ -23,6 +23,10 @@ export function PendingRequestsTable({ token, items, onDecision }: Readonly<Prop
   const decide = async (requestId: number, status: "APPROVED" | "REJECTED") => {
     setError("");
     const comment = getValues("comment");
+    const confirmed = window.confirm(`Confirm ${status.toLowerCase()} for request #${requestId}?`);
+    if (!confirmed) {
+      return;
+    }
     try {
       await decideAdvance(token, requestId, status, comment ?? "");
       onDecision();
@@ -46,35 +50,39 @@ export function PendingRequestsTable({ token, items, onDecision }: Readonly<Prop
             </div>
           </form>
 
-          <table className="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Employee</th>
-                <th>Amount</th>
-                <th>Reason</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
-                  <td>{item.employeeName}</td>
-                  <td>{item.amount}</td>
-                  <td>{item.reason}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
-                    <button type="button" onClick={() => decide(item.id, "APPROVED")} disabled={isSubmitting}>
-                      Approve
-                    </button>
-                    <button type="button" className="reject" onClick={() => decide(item.id, "REJECTED")} disabled={isSubmitting}>
-                      Reject
-                    </button>
-                  </td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Employee</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.employeeName}</td>
+                    <td>{item.amount}</td>
+                    <td><span className="badge pending">{item.status}</span></td>
+                    <td>{item.reason}</td>
+                    <td style={{ display: "flex", gap: 8 }}>
+                      <button type="button" onClick={() => decide(item.id, "APPROVED")} disabled={isSubmitting}>
+                        Approve
+                      </button>
+                      <button type="button" className="reject" onClick={() => decide(item.id, "REJECTED")} disabled={isSubmitting}>
+                        Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
       {error && <p className="error">{error}</p>}

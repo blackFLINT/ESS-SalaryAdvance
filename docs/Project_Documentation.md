@@ -12,9 +12,11 @@ Build a secure and scalable web-based Employee Self Service platform for salary 
 
 ### Objectives
 - Provide employee self-service request submission.
-- Implement manager/admin approval workflow.
+- Implement manager approval and HR/Payroll processing workflow.
 - Enforce financial and data validation rules.
 - Provide real-time request status tracking.
+- Provide audit trail, notifications, reporting, repayment tracking, and corporate settings.
+- Support user, role, and feature-level access management.
 - Deploy using containerized microservices.
 
 ## 4. Stakeholders
@@ -34,7 +36,8 @@ Build a secure and scalable web-based Employee Self Service platform for salary 
 ### User Requirements
 - Employees can create and track requests.
 - Managers can review pending requests quickly.
-- Admin can observe all requests.
+- HR/Payroll can process approved requests and export payroll queues.
+- System Admin can manage users, feature access, corporate settings, audit trail, system health, and reports.
 
 ## 6. SRS
 Detailed Software Requirements Specification is provided in `docs/SRS.md`.
@@ -70,8 +73,8 @@ Use Case Points (UCP).
 - No external identity provider in v1.
 
 ### Scope Influence
-- Deferred advanced analytics/reporting.
-- Implemented core workflow and policy enforcement first.
+- Implemented core workflow, policy enforcement, notifications, auditability, reports, repayment tracking, and admin configuration first.
+- Deferred direct payroll disbursement, SSO, and full multi-level approvals.
 
 ## 8. System Analysis
 - Existing process is manual, low transparency, high latency.
@@ -85,22 +88,35 @@ Use Case Points (UCP).
 
 ### Use Cases
 - Login
+- Change password
 - Submit salary advance request
 - View personal request history
 - Review pending requests
 - Approve/reject with comments
+- Process approved advances through HR/Payroll
+- View repayment summary
+- View notifications
+- Manage users, roles, and feature access
+- Configure corporate settings
+- View audit trail and system health
+- Generate monthly reports and CSV exports
 
 ### Data Model
-- Employee (role, salary, credentials)
-- SalaryAdvanceRequest (amount, reason, status, comments, timestamps)
+- Employee (role, features, salary, credentials, department, job title, branch, manager, salary band, max advance eligibility, account security fields)
+- SalaryAdvanceRequest (amount, reason, status, approval/payroll comments, repayment fields, timestamps)
+- Notification (employee notifications for workflow events)
+- AuditLog (immutable activity record for workflow and access changes)
+- CorporateSettings (company policy and branding configuration)
+- RefreshToken (JWT refresh-token rotation)
 
 ### Mermaid Architecture Diagram
 ```mermaid
 flowchart LR
-  A[Employee / Manager Browser] --> B[Next.js Frontend Service]
+  A[Employee / Manager / Admin / HR Browser] --> B[Next.js Frontend Service]
   B --> C[Spring Boot Backend Service]
   C --> D[(PostgreSQL)]
   C --> E[JWT Auth + RBAC]
+  C --> F[Audit + Notifications + Reports]
 ```
 
 Detailed design artifacts are in `docs/Design_Diagrams.md`.
@@ -108,12 +124,18 @@ Detailed design artifacts are in `docs/Design_Diagrams.md`.
 ## 10. Implementation
 Implemented as a functional application with:
 - Frontend, backend, database
-- JWT authentication
-- Role-based authorization
+- JWT authentication with refresh-token support
+- Role-based and feature-level authorization
 - Input validation (frontend + backend)
 - Error handling
 - Security controls
 - Responsive UI
+- HR/Payroll processing
+- Notification inbox
+- Audit trail
+- Reports and CSV export
+- Repayment tracking
+- Corporate settings
 
 ## 11. Testing
 Detailed testing report in `docs/Testing_Report.md`.
@@ -144,12 +166,14 @@ Detailed user manual in `docs/User_Manual.md`.
 ## 16. Future Evolution
 - Integrate with payroll APIs.
 - Introduce multi-level approvals.
-- Add reporting dashboard and exports.
 - Enable SSO with enterprise identity provider.
+- Add email/SMS delivery for notifications.
+- Add Excel/PDF exports and richer analytics.
 
 ## 17. Limitations
 - No direct payroll disbursement in v1.
-- Simplified RBAC and notification workflow.
+- In-app notifications exist, but no email/SMS delivery pipeline is included yet.
+- Multi-level approval thresholds are configurable, but a full chained approval engine is not included yet.
 
 ## 18. Conclusion
 The solution addresses the core salary advance workflow with secure, validated, and auditable processing using a modern microservice architecture.

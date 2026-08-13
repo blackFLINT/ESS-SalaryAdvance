@@ -10,9 +10,11 @@ Live Backend API URL:
 - Add deployed backend URL here
 
 Credentials (for assessor, if required):
-- Employee: employee@ess.local / Password@123
-- Manager: manager@ess.local / Password@123
-- Admin: admin@ess.local / Password@123
+- Employee: employee@ess.local / provide demo password securely
+- Manager: manager@ess.local / provide demo password securely
+- Admin: admin@ess.local / provide demo password securely
+- HR/Payroll: payroll@ess.local / provide demo password securely
 
 Notes:
-- Replace local seeded credentials with assessor-safe credentials in production submission.
+- Do not publish seeded passwords in production-facing documentation.
+- Share assessor-safe demo passwords through the approved private submission channel.

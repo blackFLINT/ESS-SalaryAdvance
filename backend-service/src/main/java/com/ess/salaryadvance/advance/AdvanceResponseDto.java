@@ -11,6 +11,11 @@ public class AdvanceResponseDto {
     private String reason;
     private String status;
     private String approverComment;
+    private String payrollComment;
+    private Integer repaymentInstallments;
+    private BigDecimal monthlyDeductionAmount;
+    private BigDecimal remainingBalance;
+    private String repaymentStatus;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -23,6 +28,11 @@ public class AdvanceResponseDto {
         dto.reason = request.getReason();
         dto.status = request.getStatus().name();
         dto.approverComment = request.getApproverComment();
+        dto.payrollComment = request.getPayrollComment();
+        dto.repaymentInstallments = request.getRepaymentInstallments();
+        dto.monthlyDeductionAmount = request.getMonthlyDeductionAmount();
+        dto.remainingBalance = request.getRemainingBalance();
+        dto.repaymentStatus = request.getRepaymentStatus().name();
         dto.createdAt = request.getCreatedAt();
         dto.updatedAt = request.getUpdatedAt();
         return dto;
@@ -54,6 +64,26 @@ public class AdvanceResponseDto {
 
     public String getApproverComment() {
         return approverComment;
+    }
+
+    public String getPayrollComment() {
+        return payrollComment;
+    }
+
+    public Integer getRepaymentInstallments() {
+        return repaymentInstallments;
+    }
+
+    public BigDecimal getMonthlyDeductionAmount() {
+        return monthlyDeductionAmount;
+    }
+
+    public BigDecimal getRemainingBalance() {
+        return remainingBalance;
+    }
+
+    public String getRepaymentStatus() {
+        return repaymentStatus;
     }
 
     public Instant getCreatedAt() {
