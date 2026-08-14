@@ -12,7 +12,7 @@ import {
 } from "./types";
 
 const runtimeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
-const API_BASE = runtimeEnv?.NEXT_PUBLIC_API_BASE_URL ?? "http://172.104.131.185:8080/api";
+const API_BASE = runtimeEnv?.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api";
 
 async function errorMessage(response: Response): Promise<string> {
   const text = await response.text();
